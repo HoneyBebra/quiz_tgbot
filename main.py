@@ -1,12 +1,13 @@
 import os
 import logging
 from aiogram import Bot, Dispatcher, executor, types
-import requests
-from bs4 import BeautifulSoup as BS
 import random
 from dotenv import load_dotenv
+import requests
+from bs4 import BeautifulSoup as BS
 
 from DB_model import WWWStatistics
+from update_global_dict import add_open_www_question_to_global_dict, add_open_triviador_question_to_global_dict
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,6 +19,14 @@ bot = Bot(token=os.environ.get('TOKEN'))
 dp = Dispatcher(bot)
 
 global dict_questions
+# For WWW open question:
+# dict_questions = {
+# user_id: [open_question, right_answer, additional_answer, comment, location_game, author, source, photo_href]
+# }
+# For triviador open question:
+# dict_questions = {
+# user_id: [open_triviador_question, right_answer]
+# }
 global quiz
 
 user_statistics_db = WWWStatistics()
@@ -42,127 +51,46 @@ async def cmd_start_help(message: types.Message):
 async def game_open_questions(message: types.Message):
     global dict_questions
 
-    async def open_WWW_ques():
-        global dict_questions
-
-        page = requests.get('https://db.chgk.info/random/types1234/1105442716/limit1')
-        page_open_ques = str(page.text)
-        soup = BS(page_open_ques, "html.parser")
-        random_ques = str(soup.find('div', class_='random_question').get_text())
-
-        flag = 0
-
-        # Removing inappropriate questions
-        while flag != 1:
-            if 'Раздаточный материал' in random_ques or 'z-checkdb' in random_ques or 'Блиц' in random_ques or \
-                    'Дуплет' in random_ques:
-                page = requests.get('https://db.chgk.info/random/1329656998/limit1')
-                page_open_ques = str(page.text)
-                soup = BS(page_open_ques, "html.parser")
-                random_ques = str(soup.find('div', class_='random_question').get_text())
-            else:
-                flag = 1
-
-        # Removing inappropriate hyphens
-        question = ' '.join(random_ques[random_ques.find('Вопрос 1:') + 10:random_ques.find('Ответ:') - 6].split())
-
-        photo_href = ''
-        try:
-            photo_href = soup.find('div', class_='random_question').find('img')['src']
-        except TypeError:
-            pass
-
-        # CAD - list [comment, answer, additional answer, author, source]
-        CAD = soup.find('div', class_='collapsible').find_all('p')
-        answer = ' '.join(CAD[0].get_text()[8:].split())
-        real_game = soup.select_one('.random_question > p').text
-        author = CAD[-1].text
-        add_answer = ''
-        comment = ''
-        if 'Зачёт:' in str(CAD) and 'Комментарий:' in str(CAD):
-            add_ans = str(CAD[1].get_text()[8:])
-            if 'Незачет' in add_ans:
-                add_answer = ' '.join(add_ans[:add_ans.find('Незачет') + 1].split())
-            else:
-                add_answer = add_ans
-            comment = ' '.join(CAD[2].get_text()[14:].split())
-        elif 'Зачёт:' in str(CAD):
-            add_ans = str(CAD[1].get_text()[8:])
-            if 'Незачет' in add_ans:
-                add_answer = ' '.join(add_ans[:add_ans.find('Незачет') + 1].split())
-            else:
-                add_answer = add_ans
-        elif 'Комментарий:' in str(CAD):
-            comment = ' '.join(CAD[1].get_text()[14:].split())
-
-        if 'Источник(и):' in str(CAD):
-            # Removing unnecessary margins
-            source = CAD[-2].text.replace('    ', '')
-        else:
-            source = ''
-
-        if 'Источник(и):' not in source:
-            source = ''
-        else:
-            pass
-
-        try:
-            dict_questions[message.from_user.id] = [question, answer, add_answer, comment, real_game, author, source,
-                                                    photo_href]
-        except NameError:
-            dict_questions = {message.from_user.id: [question, answer, add_answer, comment, real_game, author, source,
-                                                     photo_href]}
-
-        if 'Автор' in dict_questions[message.from_user.id][5]:
-            await message.answer(
-                dict_questions[message.from_user.id][4] + '\n\n' + dict_questions[message.from_user.id][0] + '\n' +
-                dict_questions[message.from_user.id][5], reply_markup=types.ReplyKeyboardRemove())
-
-            if len(dict_questions[message.from_user.id][7]) > 0:
-                await bot.send_photo(chat_id=message.chat.id, photo=dict_questions[message.from_user.id][7])
-            else:
-                pass
-
-            await message.answer('Итак, твой ответ...')
-        else:
-            await message.answer(
-                dict_questions[message.from_user.id][4] + '\n\n' + dict_questions[message.from_user.id][0],
-                reply_markup=types.ReplyKeyboardRemove())
-
-            if len(dict_questions[message.from_user.id][7]) > 0:
-                await bot.send_photo(chat_id=message.chat.id, photo=photo_href)
-            else:
-                pass
-
-            await message.answer('Итак, твой ответ...')
-
-    # try to open triviador question
-    page_triv_open = requests.get(f'https://topasnew24.com/voprosi/page/{random.randint(1, 131)}/')
-    soup_triv_open = BS(page_triv_open.text, 'html.parser')
-
-    Ques_triviador_open = soup_triv_open.select('.img-short-title > a')
-
-    url_Q_open = Ques_triviador_open[random.randint(0, len(Ques_triviador_open) - 1)]['href']
-
-    page_Q_open = requests.get(url_Q_open)
-    soup_Q = BS(page_Q_open.text, 'html.parser')
-    use_text_open = soup_Q.select_one('.full-news-short').text
-
-    QUES_T_open = use_text_open[2:use_text_open.find('?') + 1]
     try:
-        ANSW_T = int(use_text_open[use_text_open.find('ответ:') + 7:-10])
-
         try:
-            dict_questions[message.from_user.id] = [QUES_T_open, ANSW_T]
+            dict_questions = add_open_triviador_question_to_global_dict(
+                user_id=message.from_user.id,
+                dict_questions=dict_questions
+            )
         except NameError:
-            dict_questions = {message.from_user.id: [QUES_T_open, ANSW_T]}
-
-        await message.answer('Тривиадор:\n' + dict_questions[message.from_user.id][0] + '\n\nДопускается ошибка на 5%',
-                             reply_markup=types.ReplyKeyboardRemove())
+            dict_questions = add_open_triviador_question_to_global_dict(
+                user_id=message.from_user.id
+            )
+        await message.answer(
+            'Тривиадор:\n' +
+            dict_questions[message.from_user.id][0] + '\n\n' +
+            'Допускается ошибка на 5%',
+            reply_markup=types.ReplyKeyboardRemove()
+        )
         await message.answer('Итак, твой ответ...')
 
     except ValueError:
-        await open_WWW_ques()
+        try:
+            dict_questions = add_open_www_question_to_global_dict(
+                user_id=message.from_user.id,
+                dict_questions=dict_questions
+            )
+        except NameError:
+            dict_questions = add_open_www_question_to_global_dict(
+                user_id=message.from_user.id
+            )
+        await message.answer(
+            str(dict_questions[message.from_user.id][4]) + '\n\n' +
+            str(dict_questions[message.from_user.id][0]) + '\n' +
+            str(dict_questions[message.from_user.id][5]),
+            reply_markup=types.ReplyKeyboardRemove()
+        )
+        if len(dict_questions[message.from_user.id][7]) > 0:
+            await bot.send_photo(
+                chat_id=message.chat.id,
+                photo=dict_questions[message.from_user.id][7]
+            )
+        await message.answer('Итак, твой ответ...')
 
 
 @dp.message_handler(lambda message: str(message.text).lower() == "вопрос с вариантами")
@@ -291,7 +219,7 @@ async def statistic_poll(quiz_answer: types.PollAnswer):
     if quiz.poll.correct_option_id == quiz_answer["option_ids"][0]:
         right_answer = True
     else:
-        right_answer = True
+        right_answer = False
     user_statistics_db.user_statistics_update(user_id=quiz_answer["user"]["id"], right_answer=right_answer)
 
 
@@ -516,6 +444,5 @@ async def func_answer_WWW(message: types.Message):
         await message.answer('Выбери, в какие вопросы ты хочешь играть', reply_markup=poll_keyboard)
 
 
-# RUN
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
