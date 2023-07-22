@@ -3,11 +3,12 @@ import logging
 from aiogram import Bot, Dispatcher, executor, types
 import random
 from dotenv import load_dotenv
-import requests
-from bs4 import BeautifulSoup as BS
 
 from DB_model import WWWStatistics
-from update_global_dict import add_open_www_question_to_global_dict, add_open_triviador_question_to_global_dict
+from forming_data_for_message import (
+    add_open_www_question_to_global_dict,
+    add_open_triviador_question_to_global_dict
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -68,7 +69,6 @@ async def game_open_questions(message: types.Message):
             reply_markup=types.ReplyKeyboardRemove()
         )
         await message.answer('Итак, твой ответ...')
-
     except ValueError:
         try:
             dict_questions = add_open_www_question_to_global_dict(
