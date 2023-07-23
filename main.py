@@ -9,7 +9,8 @@ from forming_data_for_message import (
     add_open_www_question_to_global_dict,
     forming_www_question_with_choice_data,
     add_open_triviador_question_to_global_dict,
-    forming_triviador_question_with_choice_data
+    forming_triviador_question_with_choice_data,
+    forming_open_answer_response_message
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -61,9 +62,7 @@ async def game_open_questions(message: types.Message):
                 dict_questions=dict_questions
             )
         except NameError:
-            dict_questions = add_open_triviador_question_to_global_dict(
-                user_id=message.from_user.id
-            )
+            dict_questions = add_open_triviador_question_to_global_dict(user_id=message.from_user.id)
         await message.answer(
             'Тривиадор:\n' +
             dict_questions[message.from_user.id][0] + '\n\n' +
@@ -78,9 +77,7 @@ async def game_open_questions(message: types.Message):
                 dict_questions=dict_questions
             )
         except NameError:
-            dict_questions = add_open_www_question_to_global_dict(
-                user_id=message.from_user.id
-            )
+            dict_questions = add_open_www_question_to_global_dict(user_id=message.from_user.id)
         await message.answer(
             str(dict_questions[message.from_user.id][4]) + '\n\n' +
             str(dict_questions[message.from_user.id][0]) + '\n' +
@@ -88,10 +85,7 @@ async def game_open_questions(message: types.Message):
             reply_markup=types.ReplyKeyboardRemove()
         )
         if len(dict_questions[message.from_user.id][7]) > 0:
-            await bot.send_photo(
-                chat_id=message.chat.id,
-                photo=dict_questions[message.from_user.id][7]
-            )
+            await bot.send_photo(chat_id=message.chat.id, photo=dict_questions[message.from_user.id][7])
         await message.answer('Итак, твой ответ...')
 
 
@@ -111,7 +105,7 @@ async def game_variants(message: types.Message):
             question, variants, right_answer = forming_triviador_question_with_choice_data()
             quiz = await bot.send_poll(chat_id=message.chat.id,
                                        question=f'Тривиадор:\n{question}',
-                                       is_anonymous=False,options=variants, type="quiz",
+                                       is_anonymous=False, options=variants, type="quiz",
                                        correct_option_id=variants.index(right_answer)
                                        )
     else:
@@ -176,112 +170,13 @@ async def easter_egg(message: types.Message):
 
 
 @dp.message_handler()
-async def func_answer_WWW(message: types.Message):
+async def func_answer_www(message: types.Message):
     poll_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     poll_keyboard.add(types.KeyboardButton(text="Открытый вопрос"),
                       types.KeyboardButton(text="Вопрос с вариантами"),
                       types.KeyboardButton(text="Рандом"),
                       types.KeyboardButton(text="Статистика"))
     global dict_questions
-
-    async def right_answer():
-
-        user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=True)
-
-        # message answer
-        if len(dict_questions[message.from_user.id][3]) >= 1 and len(dict_questions[message.from_user.id][2]) >= 1 \
-                and len(dict_questions[message.from_user.id][6]) >= 1:
-            await message.answer(f'Верный ответ!\n\n{dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Принимаются ответы: {dict_questions[message.from_user.id][2]}\n\n'
-                                 f'Комментарий: {dict_questions[message.from_user.id][3]}\n'
-                                 f'{dict_questions[message.from_user.id][6]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][3]) >= 1 and len(dict_questions[message.from_user.id][2]) >= 1:
-            await message.answer(f'Верный ответ!\n\n{dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Принимаются ответы: {dict_questions[message.from_user.id][2]}\n\n'
-                                 f'Комментарий: {dict_questions[message.from_user.id][3]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][3]) >= 1 and len(dict_questions[message.from_user.id][6]) >= 1:
-            await message.answer(f'Верный ответ!\n\n{dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Комментарий: {dict_questions[message.from_user.id][3]}\n'
-                                 f'{dict_questions[message.from_user.id][6]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][3]) >= 1:
-            await message.answer(f'Верный ответ!\n\n{dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Комментарий: {dict_questions[message.from_user.id][3]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][2]) >= 1 and len(dict_questions[message.from_user.id][6]) >= 1:
-            await message.answer(f'Верный ответ!\n\n{dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Принимаются ответы: {dict_questions[message.from_user.id][2]}\n'
-                                 f'{dict_questions[message.from_user.id][6]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][2]) >= 1:
-            await message.answer(f'Верный ответ!\n\n{dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Принимаются ответы: {dict_questions[message.from_user.id][2]}',
-                                 reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][6]) >= 1:
-            await message.answer(f'Верный ответ!\n\n'
-                                 f'{dict_questions[message.from_user.id][1]}\n'
-                                 f'{dict_questions[message.from_user.id][6]}', reply_markup=poll_keyboard)
-
-        else:
-            await message.answer(f'Верный ответ!\n\n'
-                                 f'{dict_questions[message.from_user.id][1]}',
-                                 reply_markup=poll_keyboard)
-
-    async def wrong_answer():
-
-        user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
-
-        # message answer
-        if len(dict_questions[message.from_user.id][3]) >= 1 and len(dict_questions[message.from_user.id][2]) >= 1 \
-                and len(dict_questions[message.from_user.id][6]) >= 1:
-            await message.answer(f'Ответ неверен\n\n'
-                                 f'Верный ответ: {dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Принимаются ответы: {dict_questions[message.from_user.id][2]}\n\n'
-                                 f'Комментарий: {dict_questions[message.from_user.id][3]}\n'
-                                 f'{dict_questions[message.from_user.id][6]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][3]) >= 1 and len(dict_questions[message.from_user.id][2]) >= 1:
-            await message.answer(f'Ответ неверен\n\n'
-                                 f'Верный ответ: {dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Принимаются ответы: {dict_questions[message.from_user.id][2]}\n\n'
-                                 f'Комментарий: {dict_questions[message.from_user.id][3]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][3]) >= 1 and len(dict_questions[message.from_user.id][6]) >= 1:
-            await message.answer(f'Ответ неверен\n\n'
-                                 f'Верный ответ: {dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Комментарий: {dict_questions[message.from_user.id][3]}\n'
-                                 f'{dict_questions[message.from_user.id][6]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][3]) >= 1:
-            await message.answer(f'Ответ неверен\n\n'
-                                 f'Верный ответ: {dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Комментарий: {dict_questions[message.from_user.id][3]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][2]) >= 1 and len(dict_questions[message.from_user.id][6]) >= 1:
-            await message.answer(f'Ответ неверен\n\n'
-                                 f'Верный ответ: {dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Принимаются ответы: {dict_questions[message.from_user.id][2]}\n'
-                                 f'{dict_questions[message.from_user.id][6]}', reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][2]) >= 1:
-            await message.answer(f'Ответ неверен\n\n'
-                                 f'Верный ответ: {dict_questions[message.from_user.id][1]}\n\n'
-                                 f'Принимаются ответы: {dict_questions[message.from_user.id][2]}',
-                                 reply_markup=poll_keyboard)
-
-        elif len(dict_questions[message.from_user.id][6]) >= 1:
-            await message.answer(f'Ответ неверен\n\n'
-                                 f'Верный ответ: {dict_questions[message.from_user.id][1]}\n'
-                                 f'{dict_questions[message.from_user.id][6]}',
-                                 reply_markup=poll_keyboard)
-
-        else:
-            await message.answer(f'Ответ неверен\n\n'
-                                 f'Верный ответ: {dict_questions[message.from_user.id][1]}',
-                                 reply_markup=poll_keyboard)
 
     # response processing
     # IF received a non-command message, no question was asked (that is, it is not an answer to the question)
@@ -294,7 +189,11 @@ async def func_answer_WWW(message: types.Message):
                 dict_questions[message.from_user.id].append(str(message.text))
                 if len(dict_questions[message.from_user.id][-1]) == 1 and len(
                         dict_questions[message.from_user.id][1]) != 1:
-                    await wrong_answer()
+                    await message.answer(forming_open_answer_response_message(
+                        dict_questions=dict_questions,
+                        user_id=message.from_user.id,
+                        right_answer=False), reply_markup=poll_keyboard)
+                    await user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
 
                     dict_questions.pop(message.from_user.id)
                 else:
@@ -303,7 +202,12 @@ async def func_answer_WWW(message: types.Message):
                         if len(word) > 1:
                             if word in dict_questions[message.from_user.id][1].lower() or word in \
                                     dict_questions[message.from_user.id][2].lower():
-                                await right_answer()
+                                await message.answer(forming_open_answer_response_message(
+                                    dict_questions=dict_questions,
+                                    user_id=message.from_user.id,
+                                    right_answer=True), reply_markup=poll_keyboard)
+                                await user_statistics_db.user_statistics_update(user_id=message.from_user.id,
+                                                                                right_answer=True)
 
                                 flag_2 = 1
                                 dict_questions.pop(message.from_user.id)
@@ -312,7 +216,12 @@ async def func_answer_WWW(message: types.Message):
                             continue
 
                     if flag_2 == 0:
-                        await wrong_answer()
+                        await message.answer(forming_open_answer_response_message(
+                            dict_questions=dict_questions,
+                            user_id=message.from_user.id,
+                            right_answer=False), reply_markup=poll_keyboard)
+                        await user_statistics_db.user_statistics_update(user_id=message.from_user.id,
+                                                                        right_answer=False)
 
                         dict_questions.pop(message.from_user.id)
 
