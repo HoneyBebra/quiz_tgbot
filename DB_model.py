@@ -24,7 +24,7 @@ class WWWStatistics:
         }
         # check if the user is in the database
         user_existence = len(self.cursor.execute(
-            f"""
+                    f"""
                     SELECT * FROM Statistics 
                     WHERE user_id = {user_id}
                     """
@@ -34,8 +34,8 @@ class WWWStatistics:
                 f"""
                 INSERT INTO Statistics (user_id, stat_right, stat_wrong) 
                 VALUES ({user_id}, 
-                    {answer_result[right_answer][0]}, 
-                    {answer_result[right_answer][1]})
+                {answer_result[right_answer][0]}, 
+                {answer_result[right_answer][1]})
                 """
                 )
         else:
