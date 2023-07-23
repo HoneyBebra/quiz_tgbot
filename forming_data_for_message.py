@@ -93,29 +93,32 @@ def forming_open_answer_response_message(dict_questions, user_id, right_answer: 
         True: 'Верный ответ!',
         False: 'Ответ неверен'
     }
+    if len(dict_questions[user_id]) == 3:
+        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}'
+        return bot_answer
+
     if len(dict_questions[user_id][3]) >= 1 and len(dict_questions[user_id][2]) >= 1 \
             and len(dict_questions[user_id][6]) >= 1:
-        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n'
-        f"Принимаются ответы: {dict_questions[user_id][2]}\n\nКомментарий: {dict_questions[user_id][3]}\n"
-        f"{dict_questions[user_id][6]}"
+        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n' + \
+                     f'Принимаются ответы: {dict_questions[user_id][2]}\n\n' + \
+                     f'Комментарий: {dict_questions[user_id][3]}\n{dict_questions[user_id][6]}'
     elif len(dict_questions[user_id][3]) >= 1 and len(dict_questions[user_id][2]) >= 1:
-        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n'
-        f"Принимаются ответы: {dict_questions[user_id][2]}\n\nКомментарий: {dict_questions[user_id][3]}"
+        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n' + \
+                     f'Принимаются ответы: {dict_questions[user_id][2]}\n\nКомментарий: {dict_questions[user_id][3]}'
     elif len(dict_questions[user_id][3]) >= 1 and len(dict_questions[user_id][6]) >= 1:
-        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n'
-        f"Комментарий: {dict_questions[user_id][3]}\n{dict_questions[user_id][6]}"
+        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n' + \
+                     f'Комментарий: {dict_questions[user_id][3]}\n{dict_questions[user_id][6]}'
     elif len(dict_questions[user_id][3]) >= 1:
-        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n' \
+        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n' + \
                      f'Комментарий: {dict_questions[user_id][3]}'
     elif len(dict_questions[user_id][2]) >= 1 and len(dict_questions[user_id][6]) >= 1:
-        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n'
-        f"Принимаются ответы: {dict_questions[user_id][2]}\n{dict_questions[user_id][6]}"
+        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n' + \
+                     f'Принимаются ответы: {dict_questions[user_id][2]}\n{dict_questions[user_id][6]}'
     elif len(dict_questions[user_id][2]) >= 1:
-        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n' \
+        bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n\n' + \
                      f'Принимаются ответы: {dict_questions[user_id][2]}'
     elif len(dict_questions[user_id][6]) >= 1:
         bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}\n{dict_questions[user_id][6]}'
     else:
         bot_answer = f'{answer_category[right_answer]}\n\n{dict_questions[user_id][1]}'
-
     return bot_answer

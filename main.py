@@ -179,11 +179,9 @@ async def func_answer_www(message: types.Message):
     global dict_questions
 
     # response processing
-    # IF received a non-command message, no question was asked (that is, it is not an answer to the question)
     try:
         # IF received a non-command message, no question was asked (that is, it is not an answer to the question)
         if message.from_user.id in dict_questions:
-
             # WWW responses
             if len(dict_questions[message.from_user.id]) > 2:
                 dict_questions[message.from_user.id].append(str(message.text))
@@ -193,7 +191,7 @@ async def func_answer_www(message: types.Message):
                         dict_questions=dict_questions,
                         user_id=message.from_user.id,
                         right_answer=False), reply_markup=poll_keyboard)
-                    await user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
+                    user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
 
                     dict_questions.pop(message.from_user.id)
                 else:
@@ -206,8 +204,8 @@ async def func_answer_www(message: types.Message):
                                     dict_questions=dict_questions,
                                     user_id=message.from_user.id,
                                     right_answer=True), reply_markup=poll_keyboard)
-                                await user_statistics_db.user_statistics_update(user_id=message.from_user.id,
-                                                                                right_answer=True)
+                                user_statistics_db.user_statistics_update(user_id=message.from_user.id,
+                                                                          right_answer=True)
 
                                 flag_2 = 1
                                 dict_questions.pop(message.from_user.id)
@@ -220,8 +218,7 @@ async def func_answer_www(message: types.Message):
                             dict_questions=dict_questions,
                             user_id=message.from_user.id,
                             right_answer=False), reply_markup=poll_keyboard)
-                        await user_statistics_db.user_statistics_update(user_id=message.from_user.id,
-                                                                        right_answer=False)
+                        user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
 
                         dict_questions.pop(message.from_user.id)
 
@@ -231,29 +228,29 @@ async def func_answer_www(message: types.Message):
                     dict_questions[message.from_user.id].append(int(message.text))
                     if (dict_questions[message.from_user.id][1] * 0.99) < dict_questions[message.from_user.id][2] < \
                             (dict_questions[message.from_user.id][1] * 1.01):
-                        await message.answer(f'Верный ответ!\n\n'
-                                             f'{dict_questions[message.from_user.id][1]}',
-                                             reply_markup=poll_keyboard)
-
+                        await message.answer(forming_open_answer_response_message(
+                            dict_questions=dict_questions,
+                            user_id=message.from_user.id,
+                            right_answer=True), reply_markup=poll_keyboard)
                         user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=True)
 
                         dict_questions.pop(message.from_user.id)
 
                     else:
-                        await message.answer(f'Ответ неверен\n\n'
-                                             f'Верный ответ: {dict_questions[message.from_user.id][1]}',
-                                             reply_markup=poll_keyboard)
-
+                        await message.answer(forming_open_answer_response_message(
+                            dict_questions=dict_questions,
+                            user_id=message.from_user.id,
+                            right_answer=False), reply_markup=poll_keyboard)
                         user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
 
                         dict_questions.pop(message.from_user.id)
 
                 except ValueError:
-                    await message.answer(f'Ответ неверен\n\n'
-                                         f'Верный ответ: {dict_questions[message.from_user.id][1]}',
-                                         reply_markup=poll_keyboard)
-
-                    await user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
+                    await message.answer(forming_open_answer_response_message(
+                        dict_questions=dict_questions,
+                        user_id=message.from_user.id,
+                        right_answer=False), reply_markup=poll_keyboard)
+                    user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
 
                     dict_questions.pop(message.from_user.id)
 

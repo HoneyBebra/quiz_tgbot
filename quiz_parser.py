@@ -28,7 +28,7 @@ class OpenWWWQuestions:
         right_answer = ' '.join(collapsible_class[0].get_text()[8:].split())
         author = collapsible_class[-1].text
         if 'Автор' not in author:
-            author = 'Неизвестен'
+            author = '\nАвтор неизвестен'
         location_game = self.soup.select_one('.random_question > p').text
         additional_answer = ''
         comment = ''
