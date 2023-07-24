@@ -12,6 +12,10 @@ from forming_data_for_message import (
     forming_triviador_question_with_choice_data,
     forming_open_answer_response_message
 )
+from checking_answers import (
+    check_www_user_answer,
+    check_triviador_user_answer
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -178,84 +182,41 @@ async def func_answer_www(message: types.Message):
                       types.KeyboardButton(text="Статистика"))
     global dict_questions
 
-    # response processing
     try:
-        # IF received a non-command message, no question was asked (that is, it is not an answer to the question)
-        if message.from_user.id in dict_questions:
-            # WWW responses
-            if len(dict_questions[message.from_user.id]) > 2:
-                dict_questions[message.from_user.id].append(str(message.text))
-                if len(dict_questions[message.from_user.id][-1]) == 1 and len(
-                        dict_questions[message.from_user.id][1]) != 1:
-                    await message.answer(forming_open_answer_response_message(
-                        dict_questions=dict_questions,
-                        user_id=message.from_user.id,
-                        right_answer=False), reply_markup=poll_keyboard)
-                    user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
-
-                    dict_questions.pop(message.from_user.id)
-                else:
-                    flag_2 = 0
-                    for word in dict_questions[message.from_user.id][-1].lower().split():
-                        if len(word) > 1:
-                            if word in dict_questions[message.from_user.id][1].lower() or word in \
-                                    dict_questions[message.from_user.id][2].lower():
-                                await message.answer(forming_open_answer_response_message(
-                                    dict_questions=dict_questions,
-                                    user_id=message.from_user.id,
-                                    right_answer=True), reply_markup=poll_keyboard)
-                                user_statistics_db.user_statistics_update(user_id=message.from_user.id,
-                                                                          right_answer=True)
-
-                                flag_2 = 1
-                                dict_questions.pop(message.from_user.id)
-                                break
-                        else:
-                            continue
-
-                    if flag_2 == 0:
-                        await message.answer(forming_open_answer_response_message(
-                            dict_questions=dict_questions,
-                            user_id=message.from_user.id,
-                            right_answer=False), reply_markup=poll_keyboard)
-                        user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
-
-                        dict_questions.pop(message.from_user.id)
-
-            # Triviador responses
-            else:
-                try:
-                    dict_questions[message.from_user.id].append(int(message.text))
-                    if (dict_questions[message.from_user.id][1] * 0.99) < dict_questions[message.from_user.id][2] < \
-                            (dict_questions[message.from_user.id][1] * 1.01):
-                        await message.answer(forming_open_answer_response_message(
-                            dict_questions=dict_questions,
-                            user_id=message.from_user.id,
-                            right_answer=True), reply_markup=poll_keyboard)
-                        user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=True)
-
-                        dict_questions.pop(message.from_user.id)
-
-                    else:
-                        await message.answer(forming_open_answer_response_message(
-                            dict_questions=dict_questions,
-                            user_id=message.from_user.id,
-                            right_answer=False), reply_markup=poll_keyboard)
-                        user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
-
-                        dict_questions.pop(message.from_user.id)
-
-                except ValueError:
-                    await message.answer(forming_open_answer_response_message(
-                        dict_questions=dict_questions,
-                        user_id=message.from_user.id,
-                        right_answer=False), reply_markup=poll_keyboard)
-                    user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
-
-                    dict_questions.pop(message.from_user.id)
-
-        else:
+        if message.from_user.id not in dict_questions:
             await message.answer('Выбери, в какие вопросы ты хочешь играть', reply_markup=poll_keyboard)
+        else:
+            if len(dict_questions[message.from_user.id]) > 2:  # WWW question
+                dict_questions[message.from_user.id].append(str(message.text))
+                if check_www_user_answer(dict_questions=dict_questions, user_id=message.from_user.id):
+                    await message.answer(forming_open_answer_response_message(
+                        dict_questions=dict_questions,
+                        user_id=message.from_user.id,
+                        right_answer=True), reply_markup=poll_keyboard)
+                    user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=True)
+                else:
+                    await message.answer(forming_open_answer_response_message(
+                        dict_questions=dict_questions,
+                        user_id=message.from_user.id,
+                        right_answer=False), reply_markup=poll_keyboard)
+                    user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
+                dict_questions.pop(message.from_user.id)
+
+            else:  # Triviador responses
+                dict_questions[message.from_user.id].append(int(message.text))
+                if check_triviador_user_answer(dict_questions=dict_questions, user_id=message.from_user.id):
+                    await message.answer(forming_open_answer_response_message(
+                        dict_questions=dict_questions,
+                        user_id=message.from_user.id,
+                        right_answer=True), reply_markup=poll_keyboard)
+                    user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=True)
+                else:
+                    await message.answer(forming_open_answer_response_message(
+                        dict_questions=dict_questions,
+                        user_id=message.from_user.id,
+                        right_answer=False), reply_markup=poll_keyboard)
+                    user_statistics_db.user_statistics_update(user_id=message.from_user.id, right_answer=False)
+                dict_questions.pop(message.from_user.id)
     except NameError:
         await message.answer('Выбери, в какие вопросы ты хочешь играть', reply_markup=poll_keyboard)
 

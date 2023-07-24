@@ -95,7 +95,6 @@ class WWWQuestionsWithChoice:
             answer3 = random_question[random_question.find('c)') + 3:random_question.find('d)') - 6]
             answer4 = random_question[random_question.find('d)') + 3:random_question.find('...') - 2]
             variants = [answer1, answer2, answer3, answer4]
-
         return variants, right_answer
 
 
